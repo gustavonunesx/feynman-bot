@@ -18,13 +18,13 @@ Status vivo do projeto. Atualizado a cada "commit" (ver workflow em [CLAUDE.md](
 **Objetivo:** preparar o projeto base pra começar a construir UI.
 
 **Entregas:**
-- [ ] Init Next.js 15 (App Router) + TypeScript
-- [ ] Tailwind CSS + shadcn/ui configurados
-- [ ] Fontes DM Sans + DM Mono
-- [ ] Tema de cores (tokens Tailwind com hex da identidade visual, ver CLAUDE.md)
-- [ ] `.env.example`, `.gitignore`
+- [x] Init Next.js 15 (App Router) + TypeScript
+- [x] Tailwind CSS + shadcn/ui configurados
+- [x] Fontes DM Sans + DM Mono
+- [x] Tema de cores (tokens Tailwind com hex da identidade visual, ver CLAUDE.md)
+- [x] `.env.example`, `.gitignore`
 
-**Commit final:** `chore: setup inicial do projeto (Next.js + Tailwind + shadcn/ui)`
+**Commit final:** `chore: setup inicial do projeto (Next.js + Tailwind + shadcn/ui)` ✅
 
 ---
 
@@ -128,4 +128,4 @@ Status vivo do projeto. Atualizado a cada "commit" (ver workflow em [CLAUDE.md](
 
 ## Log de sessões
 
-_(vazio ainda — primeiro "commit" adiciona entrada aqui, formato: data — milestone/feature — o que foi feito)_
+- **2026-07-07 — M0 Setup do projeto** (`chore/setup-projeto`): git init + branch; Next.js 15.5.20 (App Router) + TypeScript (scaffold veio Next 16, pinado em 15); Tailwind v4 + shadcn/ui com button, card, textarea, input, badge, progress; DM Sans/DM Mono via next/font, `lang="pt-BR"`; tokens de cor dark-only no `:root` do globals.css (token custom `attention` #F59E0B); `.env.example` (ANTHROPIC_API_KEY, Supabase); fixes: eslint compat Next 15, `outputFileTracingRoot`. Build de produção validado.
