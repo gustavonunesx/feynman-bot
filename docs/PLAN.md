@@ -33,14 +33,14 @@ Status vivo do projeto. Atualizado a cada "commit" (ver workflow em [CLAUDE.md](
 **Objetivo:** construir e validar a interface do loop principal (tópico → explicação → reexplicação → avaliação) sem depender de IA nem banco.
 
 **Entregas:**
-- [ ] Layout base (mobile coluna única / desktop duas colunas)
-- [ ] Tela cadastro de tópico
-- [ ] Tela explicação (IA) + analogia — usando mock data (3 tópicos do PRD)
-- [ ] Campo de reexplicação (full-screen mobile, textarea desktop)
-- [ ] Tela de avaliação (score 0-100, pontos certos, pontos confusos)
-- [ ] Botão "Enviar" com hover/active, rounded-xl/2xl, shadow-sm
+- [x] Layout base (mobile coluna única / desktop duas colunas)
+- [x] Tela cadastro de tópico
+- [x] Tela explicação (IA) + analogia — usando mock data (3 tópicos do PRD)
+- [x] Campo de reexplicação (full-screen mobile, textarea desktop)
+- [x] Tela de avaliação (score 0-100, pontos certos, pontos confusos)
+- [x] Botão "Enviar" com hover/active, rounded-xl/2xl, shadow-sm
 
-**Commit final:** `feat: UI do loop principal com mock data`
+**Commit final:** `feat: UI do loop principal com mock data` ✅
 
 ---
 
@@ -128,4 +128,5 @@ Status vivo do projeto. Atualizado a cada "commit" (ver workflow em [CLAUDE.md](
 
 ## Log de sessões
 
+- **2026-07-07 — M1 UI do loop principal** (`feature/ui-loop-principal`): `lib/mock-data.ts` (3 tópicos do PRD com explicação/analogia/avaliação em pt-BR; avaliador fake determinístico respeitando regra "confusion_points nunca vazio se score < 90"; tópicos novos em sessionStorage); home com grid de cards + card "Novo tópico"; `app/topics/new` (input + chips de exemplo + loading fake 1.4s); `app/topics/[id]` (desktop 2 colunas, mobile coluna única com textarea full-screen ao focar via matchMedia < 768px e Enviar fixo embaixo; estados escrevendo → avaliando → avaliado; aviso âmbar pra resposta < 20 palavras); avaliação com nota DM Mono + count-up 400ms, faixas de cor (≥71 verde / 41–70 âmbar / ≤40 vermelho), "O que você acertou" e pontos confusos em `bg-attention/10`; `components/site-header.tsx` sticky. Animações ≤ 400ms sem bounce. Build de produção + smoke test das 3 rotas validados.
 - **2026-07-07 — M0 Setup do projeto** (`chore/setup-projeto`): git init + branch; Next.js 15.5.20 (App Router) + TypeScript (scaffold veio Next 16, pinado em 15); Tailwind v4 + shadcn/ui com button, card, textarea, input, badge, progress; DM Sans/DM Mono via next/font, `lang="pt-BR"`; tokens de cor dark-only no `:root` do globals.css (token custom `attention` #F59E0B); `.env.example` (ANTHROPIC_API_KEY, Supabase); fixes: eslint compat Next 15, `outputFileTracingRoot`. Build de produção validado.

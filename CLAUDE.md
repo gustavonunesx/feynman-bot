@@ -38,10 +38,12 @@ app/
     review/             # cálculo SM-2, atualiza review_schedule
 components/
   ui/                    # shadcn/ui primitives
+  site-header.tsx        # header sticky compartilhado
 lib/
   supabase/              # client server/browser
   sm2.ts                 # algoritmo de repetição espaçada
   prompts.ts             # prompts do Professor e Avaliador (ver PRD seção 8)
+  mock-data.ts           # mock do M1 (Professor/Avaliador fake) — substituir pela IA no M2
 docs/
   PRD.md
 ```
