@@ -19,7 +19,7 @@ Usuário cadastra tópico difícil → IA explica simples + analogia → usuári
 ## Stack
 
 - **Frontend:** Next.js 15 (App Router) + React + TypeScript
-- **Estilo:** Tailwind CSS + shadcn/ui
+- **Estilo:** Tailwind CSS v4 (CSS-first, tokens no `app/globals.css`) + shadcn/ui — app dark-only, tema da marca direto no `:root`; cor de atenção exposta como token `attention` (`bg-attention` etc.)
 - **Banco:** Supabase (Postgres), RLS ligado desde já mesmo mono-usuário
 - **IA:** Claude API (Anthropic), modelo **Haiku** (custo baixo) — nunca trocar por modelo mais caro sem necessidade explícita
 - **Deploy:** Vercel
