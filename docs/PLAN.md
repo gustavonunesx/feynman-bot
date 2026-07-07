@@ -1,0 +1,131 @@
+# PLAN — Feynman Bot
+
+Status vivo do projeto. Atualizado a cada "commit" (ver workflow em [CLAUDE.md](../CLAUDE.md)). Fonte de requisitos: [docs/PRD.md](PRD.md).
+
+## Como usar este arquivo
+
+- Ordem: setup → UI (mock data) → integração IA → persistência → SM-2 → painel de revisão → polish → deploy.
+- Cada milestone tem branch própria, objetivo, entregas em checkbox e mensagem de commit final.
+- `[ ]` pendente, `[x]` feito.
+- Seção "Log de sessões" no final registra o que foi feito em cada "commit", mais recente no topo.
+
+---
+
+## Milestones
+
+### M0 — Setup do projeto
+**Branch:** `chore/setup-projeto`
+**Objetivo:** preparar o projeto base pra começar a construir UI.
+
+**Entregas:**
+- [ ] Init Next.js 15 (App Router) + TypeScript
+- [ ] Tailwind CSS + shadcn/ui configurados
+- [ ] Fontes DM Sans + DM Mono
+- [ ] Tema de cores (tokens Tailwind com hex da identidade visual, ver CLAUDE.md)
+- [ ] `.env.example`, `.gitignore`
+
+**Commit final:** `chore: setup inicial do projeto (Next.js + Tailwind + shadcn/ui)`
+
+---
+
+### M1 — UI do loop principal (mock data)
+**Branch:** `feature/ui-loop-principal`
+**Objetivo:** construir e validar a interface do loop principal (tópico → explicação → reexplicação → avaliação) sem depender de IA nem banco.
+
+**Entregas:**
+- [ ] Layout base (mobile coluna única / desktop duas colunas)
+- [ ] Tela cadastro de tópico
+- [ ] Tela explicação (IA) + analogia — usando mock data (3 tópicos do PRD)
+- [ ] Campo de reexplicação (full-screen mobile, textarea desktop)
+- [ ] Tela de avaliação (score 0-100, pontos certos, pontos confusos)
+- [ ] Botão "Enviar" com hover/active, rounded-xl/2xl, shadow-sm
+
+**Commit final:** `feat: UI do loop principal com mock data`
+
+---
+
+### M2 — Integração IA (Professor + Avaliador)
+**Branch:** `feature/integracao-claude`
+**Objetivo:** substituir mock data pela IA de verdade (Claude Haiku).
+
+**Entregas:**
+- [ ] `lib/prompts.ts` com os 2 prompts do PRD (seção 8)
+- [ ] Rota `api/explain` (Claude Haiku)
+- [ ] Rota `api/evaluate` (Claude Haiku, parse JSON)
+- [ ] Loop principal plugado na IA de verdade (substitui mock)
+- [ ] Tratamento de erro em pt-BR (resposta curta < 20 palavras, falha de API)
+
+**Commit final:** `feat: integra Claude Haiku para explicação e avaliação`
+
+---
+
+### M3 — Persistência (Supabase)
+**Branch:** `feature/supabase-persistencia`
+**Objetivo:** salvar tópicos, explicações, tentativas e avaliações — histórico completo.
+
+**Entregas:**
+- [ ] Projeto Supabase + `lib/supabase/` (client server/browser)
+- [ ] Migrations: `topics`, `explanations`, `user_attempts`, `evaluations`
+- [ ] RLS habilitado
+- [ ] Loop principal salva no banco
+- [ ] Tela de histórico por tópico (tentativas + notas ao longo do tempo)
+
+**Commit final:** `feat: persistência de tópicos, explicações e avaliações no Supabase`
+
+---
+
+### M4 — Repetição espaçada (SM-2)
+**Branch:** `feature/sm2-repeticao-espacada`
+**Objetivo:** calcular automaticamente quando cada tópico deve ser revisado.
+
+**Entregas:**
+- [ ] Migration `review_schedule`
+- [ ] `lib/sm2.ts` (algoritmo isolado, regras PRD)
+- [ ] Conversão completeness_score → qualidade SM-2
+- [ ] Atualiza `review_schedule` após cada avaliação
+
+**Commit final:** `feat: implementa algoritmo SM-2 de repetição espaçada`
+
+---
+
+### M5 — Painel "Para revisar hoje"
+**Branch:** `feature/painel-revisao`
+**Objetivo:** tela inicial mostrando só os tópicos com revisão pendente hoje.
+
+**Entregas:**
+- [ ] Tela `(dashboard)` só com tópicos `next_review_date <= hoje`
+- [ ] Navegação painel → reexplicação
+
+**Commit final:** `feat: painel de revisão diária`
+
+---
+
+### M6 — Polish
+**Branch:** `feature/polish`
+**Objetivo:** fechar detalhes de hábito e acabamento antes do deploy.
+
+**Entregas:**
+- [ ] Streak (dias seguidos)
+- [ ] Animações finais (300–400ms, sem bounce)
+- [ ] Ajustes finos de responsividade mobile/desktop
+
+**Commit final:** `feat: streak, animações e polish final`
+
+---
+
+### M7 — Deploy
+**Branch:** `chore/deploy-vercel`
+**Objetivo:** aplicação rodando em produção.
+
+**Entregas:**
+- [ ] Projeto Vercel conectado ao repo
+- [ ] Env vars (Claude API key, Supabase) configuradas
+- [ ] Deploy de produção validado
+
+**Commit final:** `chore: configura deploy de produção na Vercel`
+
+---
+
+## Log de sessões
+
+_(vazio ainda — primeiro "commit" adiciona entrada aqui, formato: data — milestone/feature — o que foi feito)_
