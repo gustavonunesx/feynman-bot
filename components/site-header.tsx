@@ -31,9 +31,9 @@ export function SiteHeader() {
             Tópicos
           </Link>
           <Button asChild size="sm" className="rounded-xl active:scale-[0.98]">
-            <Link href="/topics/new">
+            <Link href="/topics/new" aria-label="Novo tópico">
               <Plus data-icon="inline-start" />
-              Novo tópico
+              <span className="hidden sm:inline">Novo tópico</span>
             </Link>
           </Button>
         </nav>

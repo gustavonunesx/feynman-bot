@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  Flame,
   LayoutGrid,
   Plus,
   Sparkles,
@@ -11,9 +12,10 @@ import {
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { listTopics } from "@/lib/supabase/queries";
+import { getActivityDates, listTopics } from "@/lib/supabase/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { toLocalDateString } from "@/lib/sm2";
+import { computeStreak } from "@/lib/streak";
 import type { TopicSummary } from "@/lib/topics";
 
 // painel sempre fresco — a fila do dia muda a cada avaliação
@@ -42,6 +44,7 @@ const longDate = new Intl.DateTimeFormat("pt-BR", {
 
 export default async function ReviewDashboard() {
   let topics: TopicSummary[] = [];
+  let activityDates: string[] = [];
   let notice: string | null = null;
 
   if (!isSupabaseConfigured()) {
@@ -49,7 +52,10 @@ export default async function ReviewDashboard() {
       "Banco não configurado — defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no .env.local e aplique a migration de supabase/migrations.";
   } else {
     try {
-      topics = await listTopics();
+      [topics, activityDates] = await Promise.all([
+        listTopics(),
+        getActivityDates(),
+      ]);
     } catch {
       notice =
         "Não foi possível carregar sua fila de revisão agora. Confira a conexão com o Supabase e recarregue a página.";
@@ -57,6 +63,7 @@ export default async function ReviewDashboard() {
   }
 
   const today = toLocalDateString(new Date());
+  const streak = computeStreak(activityDates, today);
   const due = topics
     .filter((t) => t.nextReviewDate !== null && t.nextReviewDate <= today)
     .sort((a, b) => a.nextReviewDate!.localeCompare(b.nextReviewDate!));
@@ -77,9 +84,20 @@ export default async function ReviewDashboard() {
         />
 
         <section className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-400">
-          <p className="font-mono text-xs text-muted-foreground">
-            {longDate.format(new Date())}
-          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <p className="font-mono text-xs text-muted-foreground">
+              {longDate.format(new Date())}
+            </p>
+            {streak > 0 && (
+              <span
+                title="Dias seguidos com pelo menos 1 revisão ou tópico novo"
+                className="inline-flex items-center gap-1 rounded-xl bg-primary/10 px-2 py-0.5 font-mono text-xs font-medium text-primary ring-1 ring-primary/30"
+              >
+                <Flame className="size-3.5" aria-hidden />
+                {streak} {streak === 1 ? "dia seguido" : "dias seguidos"}
+              </span>
+            )}
+          </div>
           <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
             Para revisar hoje
           </h1>
@@ -115,7 +133,7 @@ export default async function ReviewDashboard() {
                 >
                   <article className="flex h-full flex-col justify-between gap-6 rounded-2xl bg-card p-5 shadow-sm ring-1 ring-foreground/10 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:ring-primary/40">
                     <div className="flex items-start justify-between gap-3">
-                      <h2 className="text-base font-semibold leading-snug">
+                      <h2 className="min-w-0 break-words text-base font-semibold leading-snug">
                         {topic.title}
                       </h2>
                       <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary group-hover:opacity-100" />
@@ -215,7 +233,7 @@ export default async function ReviewDashboard() {
                   className="group rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
                   <article className="flex h-full items-center justify-between gap-3 rounded-2xl border border-dashed border-border bg-card/50 p-5 transition-colors duration-300 group-hover:border-primary/50">
-                    <h3 className="text-base font-semibold leading-snug">
+                    <h3 className="min-w-0 break-words text-base font-semibold leading-snug">
                       {topic.title}
                     </h3>
                     <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary" />
