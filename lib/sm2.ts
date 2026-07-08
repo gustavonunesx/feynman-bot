@@ -76,7 +76,7 @@ export function sm2(
     easeFactor,
     intervalDays,
     repetitions,
-    nextReviewDate: toDateString(addDays(today, intervalDays)),
+    nextReviewDate: toLocalDateString(addDays(today, intervalDays)),
   };
 }
 
@@ -91,7 +91,7 @@ function addDays(date: Date, days: number): Date {
 }
 
 /** Data local em `YYYY-MM-DD` — sem toISOString pra não vazar pro dia UTC. */
-function toDateString(date: Date): string {
+export function toLocalDateString(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${date.getFullYear()}-${month}-${day}`;

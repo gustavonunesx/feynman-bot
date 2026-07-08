@@ -17,12 +17,26 @@ export function SiteHeader() {
           />
           Feynman Bot
         </Link>
-        <Button asChild size="sm" className="rounded-xl active:scale-[0.98]">
-          <Link href="/topics/new">
-            <Plus data-icon="inline-start" />
-            Novo tópico
+        <nav className="flex items-center gap-1 sm:gap-2">
+          <Link
+            href="/"
+            className="rounded-xl px-2.5 py-1.5 text-sm font-medium text-muted-foreground outline-none transition-colors duration-300 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+          >
+            Hoje
           </Link>
-        </Button>
+          <Link
+            href="/topics"
+            className="rounded-xl px-2.5 py-1.5 text-sm font-medium text-muted-foreground outline-none transition-colors duration-300 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+          >
+            Tópicos
+          </Link>
+          <Button asChild size="sm" className="rounded-xl active:scale-[0.98]">
+            <Link href="/topics/new">
+              <Plus data-icon="inline-start" />
+              Novo tópico
+            </Link>
+          </Button>
+        </nav>
       </div>
     </header>
   );

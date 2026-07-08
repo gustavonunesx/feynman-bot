@@ -52,12 +52,17 @@ function toAttempt(row: AttemptRow): Attempt {
   };
 }
 
-/** Tópicos mais recentes primeiro, com contagem de tentativas e última nota. */
+/**
+ * Tópicos mais recentes primeiro, com contagem de tentativas, última nota e
+ * próxima data de revisão (SM-2). Alimenta o painel e a lista completa.
+ */
 export async function listTopics(): Promise<TopicSummary[]> {
   const { data, error } = await getSupabaseServer()
     .from("topics")
     .select(
-      "id, title, created_at, user_attempts(created_at, evaluations(completeness_score, created_at))"
+      `id, title, created_at,
+       user_attempts(created_at, evaluations(completeness_score, created_at)),
+       review_schedule(next_review_date)`
     )
     .order("created_at", { ascending: false });
 
@@ -68,12 +73,18 @@ export async function listTopics(): Promise<TopicSummary[]> {
     const lastEvaluation = attempts
       .flatMap((a) => a.evaluations)
       .sort(byNewest)[0];
+    // unique em topic_id faz o PostgREST devolver objeto, mas o tipo gerado
+    // sem schema tipado ainda pode vir como array — aceita os dois
+    const schedule = Array.isArray(topic.review_schedule)
+      ? topic.review_schedule[0]
+      : topic.review_schedule;
     return {
       id: topic.id,
       title: topic.title,
       createdAt: topic.created_at,
       attemptCount: attempts.length,
       lastScore: lastEvaluation?.completeness_score ?? null,
+      nextReviewDate: schedule?.next_review_date ?? null,
     };
   });
 }

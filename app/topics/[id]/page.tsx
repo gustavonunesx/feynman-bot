@@ -19,7 +19,7 @@ function FallbackPage({ title, message }: { title: string; message: string }) {
         <h1 className="text-2xl font-bold">{title}</h1>
         <p className="text-muted-foreground">{message}</p>
         <Button asChild variant="secondary" className="rounded-xl">
-          <Link href="/">
+          <Link href="/topics">
             <ArrowLeft data-icon="inline-start" />
             Voltar aos tópicos
           </Link>
@@ -77,7 +77,7 @@ export default async function TopicPage({
 
         <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-400">
           <Link
-            href="/"
+            href="/topics"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" />

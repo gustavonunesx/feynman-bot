@@ -29,13 +29,15 @@ export interface TopicDetail extends Topic {
   attempts: Attempt[];
 }
 
-/** Card da home: tópico + resumo do histórico. */
+/** Card de listagem: tópico + resumo do histórico + agenda de revisão. */
 export interface TopicSummary {
   id: string;
   title: string;
   createdAt: string;
   attemptCount: number;
   lastScore: number | null;
+  /** `YYYY-MM-DD`; null enquanto o tópico não tem avaliação (sem agenda). */
+  nextReviewDate: string | null;
 }
 
 /** Sugestões de tópicos pra tela de cadastro (chips de exemplo do PRD). */
