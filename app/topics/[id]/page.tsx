@@ -83,7 +83,7 @@ export default async function TopicPage({
             <ArrowLeft className="size-3.5" />
             Tópicos
           </Link>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="mt-2 break-words text-2xl font-bold tracking-tight sm:text-3xl">
             {topic.title}
           </h1>
         </div>

@@ -93,7 +93,7 @@ export default async function TopicsPage() {
             >
               <article className="flex h-full flex-col justify-between gap-6 rounded-2xl bg-card p-5 shadow-sm ring-1 ring-foreground/10 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:ring-primary/40">
                 <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-base font-semibold leading-snug">
+                  <h2 className="min-w-0 break-words text-base font-semibold leading-snug">
                     {topic.title}
                   </h2>
                   <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary group-hover:opacity-100" />

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,6 +12,11 @@ const dmMono = DM_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
 });
+
+// chrome do navegador mobile na cor do fundo — app dark-only
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
+};
 
 export const metadata: Metadata = {
   title: "Feynman Bot",

@@ -6,7 +6,7 @@ import type {
   TopicDetail,
   TopicSummary,
 } from "@/lib/topics";
-import { INITIAL_SM2_STATE, scoreToQuality, sm2 } from "@/lib/sm2";
+import { INITIAL_SM2_STATE, scoreToQuality, sm2, toLocalDateString } from "@/lib/sm2";
 import { getSupabaseServer } from "./server";
 
 /**
@@ -87,6 +87,28 @@ export async function listTopics(): Promise<TopicSummary[]> {
       nextReviewDate: schedule?.next_review_date ?? null,
     };
   });
+}
+
+/**
+ * Dias (locais, `YYYY-MM-DD`, sem duplicata) em que houve atividade — tópico
+ * cadastrado ou tentativa de reexplicação. Alimenta o streak do painel.
+ */
+export async function getActivityDates(): Promise<string[]> {
+  const supabase = getSupabaseServer();
+
+  const [topics, attempts] = await Promise.all([
+    supabase.from("topics").select("created_at"),
+    supabase.from("user_attempts").select("created_at"),
+  ]);
+
+  if (topics.error) throw new Error(topics.error.message);
+  if (attempts.error) throw new Error(attempts.error.message);
+
+  const days = new Set<string>();
+  for (const row of [...(topics.data ?? []), ...(attempts.data ?? [])]) {
+    days.add(toLocalDateString(new Date(row.created_at)));
+  }
+  return [...days];
 }
 
 /** Tópico + explicação + histórico de tentativas (mais recente primeiro). */

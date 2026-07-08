@@ -55,8 +55,8 @@ const attemptDate = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
 });
 
-/** Nota sobe de 0 até o valor em ~400ms (regra: sem bounce, máx 400ms). */
-function AnimatedScore({ value }: { value: number }) {
+/** Conta de 0 até o valor em ~400ms (regra: sem bounce, máx 400ms). */
+function useCountUp(value: number) {
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
@@ -73,7 +73,38 @@ function AnimatedScore({ value }: { value: number }) {
     return () => cancelAnimationFrame(raf);
   }, [value]);
 
-  return <>{display}</>;
+  return display;
+}
+
+/** Nota + barra de completude subindo juntas no mesmo count-up. */
+function ScoreMeter({ score }: { score: number }) {
+  const display = useCountUp(score);
+  const band = scoreBand(score);
+
+  return (
+    <div>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Nota de completude
+          </p>
+          <p
+            className={cn(
+              "font-mono text-5xl font-medium leading-none tracking-tight",
+              band.text
+            )}
+          >
+            {display}
+            <span className="text-lg text-muted-foreground">/100</span>
+          </p>
+        </div>
+        <span className={cn("text-sm font-semibold", band.text)}>
+          {band.label}
+        </span>
+      </div>
+      <Progress value={display} className={cn("mt-4 h-1.5", band.bar)} />
+    </div>
+  );
 }
 
 export function TopicView({ topic }: { topic: TopicDetail }) {
@@ -152,7 +183,7 @@ export function TopicView({ topic }: { topic: TopicDetail }) {
       className={cn(
         "flex flex-col gap-3",
         focusMode &&
-          "fixed inset-0 z-50 bg-background p-4 md:static md:z-auto md:bg-transparent md:p-0"
+          "fixed inset-0 z-50 bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:static md:z-auto md:bg-transparent md:p-0"
       )}
     >
       {focusMode && (
@@ -297,36 +328,7 @@ export function TopicView({ topic }: { topic: TopicDetail }) {
 
   const evaluatedPanel = evaluation && (
     <div className="animate-in fade-in slide-in-from-bottom-2 flex flex-col gap-6 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-foreground/10 duration-400">
-      <div>
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Nota de completude
-            </p>
-            <p
-              className={cn(
-                "font-mono text-5xl font-medium leading-none tracking-tight",
-                scoreBand(evaluation.completenessScore).text
-              )}
-            >
-              <AnimatedScore value={evaluation.completenessScore} />
-              <span className="text-lg text-muted-foreground">/100</span>
-            </p>
-          </div>
-          <span
-            className={cn(
-              "text-sm font-semibold",
-              scoreBand(evaluation.completenessScore).text
-            )}
-          >
-            {scoreBand(evaluation.completenessScore).label}
-          </span>
-        </div>
-        <Progress
-          value={evaluation.completenessScore}
-          className={cn("mt-4 h-1.5", scoreBand(evaluation.completenessScore).bar)}
-        />
-      </div>
+      <ScoreMeter score={evaluation.completenessScore} />
 
       <div>
         <h3 className="flex items-center gap-2 text-sm font-semibold text-primary">
