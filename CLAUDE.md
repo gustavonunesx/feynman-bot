@@ -23,16 +23,20 @@ Usuário cadastra tópico difícil → IA explica simples + analogia → usuári
 - **Banco:** Supabase (Postgres), RLS ligado em todas as tabelas **sem policies** — acesso só server-side via `SUPABASE_SERVICE_ROLE_KEY` (`lib/supabase/server.ts`); chave anon não é usada. Policies por `user_id` entram só com auth multiusuário real.
 - **IA:** OpenAI API, modelo **gpt-4o-mini** (custo baixo) — nunca trocar por modelo mais caro sem necessidade explícita
 - **Deploy:** Vercel
+- **Acesso:** site protegido por senha única (`SITE_PASSWORD`) via `middleware.ts` — sem essa env var, o gate fica desligado (dev local). Rate limit de 5 chamadas de IA/dia por IP em `/api/explain` e `/api/evaluate`, guardado no Supabase (`rate_limits` + rpc `increment_rate_limit`) — protege o crédito da OpenAI quando o link é compartilhado publicamente.
 
 ## Estrutura de pastas (Next.js App Router)
 
 ```
+middleware.ts             # gate de senha única (SITE_PASSWORD) — Edge runtime
 app/
   (dashboard)/          # home (`/`): painel "para revisar hoje" (M5)
+  login/                 # tela de senha (M8)
   topics/               # lista completa de tópicos (`/topics`)
     new/                # cadastro de tópico
     [id]/               # detalhe: explicação + reexplicação + histórico
   api/
+    login/               # valida SITE_PASSWORD, seta cookie feynman_auth (M8)
     explain/            # rota que chama OpenAI (prompt "Professor")
     evaluate/           # rota que chama OpenAI (prompt "Avaliador") + roda SM-2 inline após salvar
 components/
@@ -43,6 +47,7 @@ lib/
     server.ts            # client server-only (service role, ignora RLS)
     queries.ts            # toda leitura/escrita no banco (M3) + applyReviewSchedule (M4)
   sm2.ts                 # algoritmo de repetição espaçada, puro (sem acesso a banco)
+  rate-limit.ts           # limite diário de chamadas de IA por IP, via rpc no Supabase (M8)
   prompts.ts             # prompts do Professor e Avaliador (ver PRD seção 8)
   topics.ts              # tipos de domínio (Topic/Evaluation/Attempt)
 supabase/
