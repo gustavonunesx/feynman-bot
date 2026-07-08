@@ -2,6 +2,8 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
 import { MODEL, PROFESSOR_SCHEMA, buildProfessorPrompt } from "@/lib/prompts";
+import { createTopic } from "@/lib/supabase/queries";
+import { SUPABASE_MISSING_MESSAGE, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) {
@@ -9,6 +11,9 @@ export async function POST(request: Request) {
       { error: "Chave da API não configurada — defina OPENAI_API_KEY no .env.local." },
       { status: 500 }
     );
+  }
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ error: SUPABASE_MISSING_MESSAGE }, { status: 500 });
   }
   const client = new OpenAI();
 
@@ -50,7 +55,22 @@ export async function POST(request: Request) {
       analogy: string;
     };
 
+    let id: string;
+    try {
+      id = await createTopic({
+        title: topic.trim(),
+        explanation: parsed.explanation,
+        analogy: parsed.analogy,
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "A explicação foi gerada, mas não deu pra salvar o tópico. Tente de novo." },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json({
+      id,
       explanation: parsed.explanation,
       analogy: parsed.analogy,
     });

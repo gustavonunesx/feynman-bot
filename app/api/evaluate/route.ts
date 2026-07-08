@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import { MODEL, EVALUATOR_SCHEMA, buildEvaluatorPrompt } from "@/lib/prompts";
 import { MIN_WORDS, countWords } from "@/lib/topics";
+import { getTopicForEvaluation, saveAttempt } from "@/lib/supabase/queries";
+import { SUPABASE_MISSING_MESSAGE, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) {
@@ -11,22 +13,23 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ error: SUPABASE_MISSING_MESSAGE }, { status: 500 });
+  }
   const client = new OpenAI();
 
-  let body: { topic?: unknown; aiExplanation?: unknown; userText?: unknown };
+  let body: { topicId?: unknown; userText?: unknown };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Requisição inválida." }, { status: 400 });
   }
 
-  const { topic, aiExplanation, userText } = body;
+  const { topicId, userText } = body;
   if (
-    typeof topic !== "string" ||
-    typeof aiExplanation !== "string" ||
+    typeof topicId !== "string" ||
     typeof userText !== "string" ||
-    !topic.trim() ||
-    !aiExplanation.trim() ||
+    !topicId.trim() ||
     !userText.trim()
   ) {
     return NextResponse.json({ error: "Requisição inválida." }, { status: 400 });
@@ -41,6 +44,23 @@ export async function POST(request: Request) {
     );
   }
 
+  // O conceito correto vem do banco, não do client — evita avaliar
+  // contra uma explicação adulterada ou de outro tópico.
+  let topic: Awaited<ReturnType<typeof getTopicForEvaluation>>;
+  try {
+    topic = await getTopicForEvaluation(topicId);
+  } catch {
+    return NextResponse.json(
+      { error: "Não foi possível carregar o tópico agora. Tente de novo." },
+      { status: 502 }
+    );
+  }
+  if (!topic) {
+    return NextResponse.json({ error: "Tópico não encontrado." }, { status: 404 });
+  }
+
+  const aiExplanation = `${topic.explanation}\n\nAnalogia: ${topic.analogy}`;
+
   try {
     const response = await client.chat.completions.create({
       model: MODEL,
@@ -52,7 +72,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: buildEvaluatorPrompt(topic.trim(), aiExplanation, userText),
+          content: buildEvaluatorPrompt(topic.title, aiExplanation, userText),
         },
       ],
     });
@@ -81,11 +101,22 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({
+    const evaluation = {
       completenessScore: score,
       whatWasRight: parsed.what_was_right,
       confusionPoints,
-    });
+    };
+
+    try {
+      await saveAttempt(topicId, userText, evaluation);
+    } catch {
+      return NextResponse.json(
+        { error: "Sua resposta foi avaliada, mas não deu pra salvar no histórico. Tente de novo." },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json(evaluation);
   } catch (error) {
     return NextResponse.json(
       { error: apiErrorMessage(error) },
