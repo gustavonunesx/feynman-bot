@@ -21,7 +21,7 @@ Usuário cadastra tópico difícil → IA explica simples + analogia → usuári
 - **Frontend:** Next.js 15 (App Router) + React + TypeScript
 - **Estilo:** Tailwind CSS v4 (CSS-first, tokens no `app/globals.css`) + shadcn/ui — app dark-only, tema da marca direto no `:root`; cor de atenção exposta como token `attention` (`bg-attention` etc.)
 - **Banco:** Supabase (Postgres), RLS ligado desde já mesmo mono-usuário
-- **IA:** Claude API (Anthropic), modelo **Haiku** (custo baixo) — nunca trocar por modelo mais caro sem necessidade explícita
+- **IA:** OpenAI API, modelo **gpt-4o-mini** (custo baixo) — nunca trocar por modelo mais caro sem necessidade explícita
 - **Deploy:** Vercel
 
 ## Estrutura de pastas (Next.js App Router)
@@ -33,8 +33,8 @@ app/
     new/                # cadastro de tópico
     [id]/               # detalhe: explicação + reexplicação + histórico
   api/
-    explain/            # rota que chama Claude (prompt "Professor")
-    evaluate/           # rota que chama Claude (prompt "Avaliador")
+    explain/            # rota que chama OpenAI (prompt "Professor")
+    evaluate/           # rota que chama OpenAI (prompt "Avaliador")
     review/             # cálculo SM-2, atualiza review_schedule
 components/
   ui/                    # shadcn/ui primitives
@@ -43,7 +43,7 @@ lib/
   supabase/              # client server/browser
   sm2.ts                 # algoritmo de repetição espaçada
   prompts.ts             # prompts do Professor e Avaliador (ver PRD seção 8)
-  mock-data.ts           # mock do M1 (Professor/Avaliador fake) — substituir pela IA no M2
+  topics.ts              # tipos de tópico/avaliação + storage de sessão (M2)
 docs/
   PRD.md
 ```
@@ -51,7 +51,7 @@ docs/
 ## Convenções
 
 - Todo conteúdo visível ao usuário (UI, respostas da IA, erros) em **pt-BR**.
-- Prompts Claude sempre instruem explicitamente "responda em português do Brasil".
+- Prompts da IA sempre instruem explicitamente "responda em português do Brasil".
 - Avaliação da IA nunca é só "certo/errado" — sempre cita ≥1 ponto específico (ver PRD seção 13, regra crítica).
 - Algoritmo SM-2 implementado em `lib/sm2.ts`, isolado e testável — não embutir lógica de intervalo direto nas rotas de API.
 - Schema SQL já modelado com `user_id` em `topics` mesmo sendo mono-usuário — não remover essa coluna, é preparo pro multiusuário futuro.

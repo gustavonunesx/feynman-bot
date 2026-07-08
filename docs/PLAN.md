@@ -46,16 +46,16 @@ Status vivo do projeto. Atualizado a cada "commit" (ver workflow em [CLAUDE.md](
 
 ### M2 — Integração IA (Professor + Avaliador)
 **Branch:** `feature/integracao-claude`
-**Objetivo:** substituir mock data pela IA de verdade (Claude Haiku).
+**Objetivo:** substituir mock data pela IA de verdade (OpenAI gpt-4o-mini).
 
 **Entregas:**
-- [ ] `lib/prompts.ts` com os 2 prompts do PRD (seção 8)
-- [ ] Rota `api/explain` (Claude Haiku)
-- [ ] Rota `api/evaluate` (Claude Haiku, parse JSON)
-- [ ] Loop principal plugado na IA de verdade (substitui mock)
-- [ ] Tratamento de erro em pt-BR (resposta curta < 20 palavras, falha de API)
+- [x] `lib/prompts.ts` com os 2 prompts do PRD (seção 8)
+- [x] Rota `api/explain` (gpt-4o-mini)
+- [x] Rota `api/evaluate` (gpt-4o-mini, parse JSON)
+- [x] Loop principal plugado na IA de verdade (substitui mock)
+- [x] Tratamento de erro em pt-BR (resposta curta < 20 palavras, falha de API)
 
-**Commit final:** `feat: integra Claude Haiku para explicação e avaliação`
+**Commit final:** `feat: integra OpenAI para explicação e avaliação` ✅
 
 ---
 
@@ -128,5 +128,6 @@ Status vivo do projeto. Atualizado a cada "commit" (ver workflow em [CLAUDE.md](
 
 ## Log de sessões
 
+- **2026-07-07 — M2 Integração IA** (`feature/integracao-claude`): `lib/prompts.ts` com prompts do Professor e Avaliador (PRD §8) + JSON Schema de cada um; `app/api/explain` e `app/api/evaluate` chamando OpenAI (`gpt-4o-mini`) via `response_format: json_schema` (structured outputs), com guarda de `OPENAI_API_KEY` ausente e erros tipados (`AuthenticationError`/`RateLimitError`/`APIError`) traduzidos pra pt-BR; `lib/topics.ts` substitui `lib/mock-data.ts` (tipos `Topic`/`Evaluation`, tópicos seguem em sessionStorage — persistência real é M3); regras do PRD garantidas no servidor: score clampado 0–100 e `confusion_points` nunca vazio se score < 90; `app/topics/new` e `app/topics/[id]` plugados nas rotas reais com estados de erro inline/painel + retry; home lista só tópicos de sessão (cards mock removidos). Decisão de stack: trocado Claude API (Anthropic) por OpenAI API a pedido do usuário — CLAUDE.md e PRD §6 atualizados; nome da branch e do milestone mantêm "claude" por não valer o custo de renomear branch já em uso. Build de produção + smoke test das 3 rotas + chamada live com `OPENAI_API_KEY` real validados (explain e evaluate responderam 200 com JSON correto).
 - **2026-07-07 — M1 UI do loop principal** (`feature/ui-loop-principal`): `lib/mock-data.ts` (3 tópicos do PRD com explicação/analogia/avaliação em pt-BR; avaliador fake determinístico respeitando regra "confusion_points nunca vazio se score < 90"; tópicos novos em sessionStorage); home com grid de cards + card "Novo tópico"; `app/topics/new` (input + chips de exemplo + loading fake 1.4s); `app/topics/[id]` (desktop 2 colunas, mobile coluna única com textarea full-screen ao focar via matchMedia < 768px e Enviar fixo embaixo; estados escrevendo → avaliando → avaliado; aviso âmbar pra resposta < 20 palavras); avaliação com nota DM Mono + count-up 400ms, faixas de cor (≥71 verde / 41–70 âmbar / ≤40 vermelho), "O que você acertou" e pontos confusos em `bg-attention/10`; `components/site-header.tsx` sticky. Animações ≤ 400ms sem bounce. Build de produção + smoke test das 3 rotas validados.
 - **2026-07-07 — M0 Setup do projeto** (`chore/setup-projeto`): git init + branch; Next.js 15.5.20 (App Router) + TypeScript (scaffold veio Next 16, pinado em 15); Tailwind v4 + shadcn/ui com button, card, textarea, input, badge, progress; DM Sans/DM Mono via next/font, `lang="pt-BR"`; tokens de cor dark-only no `:root` do globals.css (token custom `attention` #F59E0B); `.env.example` (ANTHROPIC_API_KEY, Supabase); fixes: eslint compat Next 15, `outputFileTracingRoot`. Build de produção validado.
