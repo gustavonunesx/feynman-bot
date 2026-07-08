@@ -3,12 +3,15 @@ import { NextResponse } from "next/server";
 
 import { MODEL, EVALUATOR_SCHEMA, buildEvaluatorPrompt } from "@/lib/prompts";
 import { MIN_WORDS, countWords } from "@/lib/topics";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import {
   applyReviewSchedule,
   getTopicForEvaluation,
   saveAttempt,
 } from "@/lib/supabase/queries";
 import { SUPABASE_MISSING_MESSAGE, isSupabaseConfigured } from "@/lib/supabase/server";
+
+const DAILY_LIMIT = 5;
 
 export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) {
@@ -20,6 +23,17 @@ export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({ error: SUPABASE_MISSING_MESSAGE }, { status: 500 });
   }
+
+  const { allowed } = await checkRateLimit(getClientIp(request), "evaluate", DAILY_LIMIT);
+  if (!allowed) {
+    return NextResponse.json(
+      {
+        error: `Limite diário de ${DAILY_LIMIT} avaliações atingido. Volte amanhã.`,
+      },
+      { status: 429 }
+    );
+  }
+
   const client = new OpenAI();
 
   let body: { topicId?: unknown; userText?: unknown };
