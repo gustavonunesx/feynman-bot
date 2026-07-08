@@ -20,7 +20,7 @@ Usuário cadastra tópico difícil → IA explica simples + analogia → usuári
 
 - **Frontend:** Next.js 15 (App Router) + React + TypeScript
 - **Estilo:** Tailwind CSS v4 (CSS-first, tokens no `app/globals.css`) + shadcn/ui — app dark-only, tema da marca direto no `:root`; cor de atenção exposta como token `attention` (`bg-attention` etc.)
-- **Banco:** Supabase (Postgres), RLS ligado desde já mesmo mono-usuário
+- **Banco:** Supabase (Postgres), RLS ligado em todas as tabelas **sem policies** — acesso só server-side via `SUPABASE_SERVICE_ROLE_KEY` (`lib/supabase/server.ts`); chave anon não é usada. Policies por `user_id` entram só com auth multiusuário real.
 - **IA:** OpenAI API, modelo **gpt-4o-mini** (custo baixo) — nunca trocar por modelo mais caro sem necessidade explícita
 - **Deploy:** Vercel
 
@@ -40,10 +40,14 @@ components/
   ui/                    # shadcn/ui primitives
   site-header.tsx        # header sticky compartilhado
 lib/
-  supabase/              # client server/browser
+  supabase/
+    server.ts            # client server-only (service role, ignora RLS)
+    queries.ts            # toda leitura/escrita no banco (M3)
   sm2.ts                 # algoritmo de repetição espaçada
   prompts.ts             # prompts do Professor e Avaliador (ver PRD seção 8)
-  topics.ts              # tipos de tópico/avaliação + storage de sessão (M2)
+  topics.ts              # tipos de domínio (Topic/Evaluation/Attempt)
+supabase/
+  migrations/            # SQL aplicado manualmente no projeto Supabase
 docs/
   PRD.md
 ```

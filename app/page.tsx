@@ -1,19 +1,41 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Plus } from "lucide-react";
+import { AlertTriangle, ArrowRight, Plus } from "lucide-react";
 
 import { SiteHeader } from "@/components/site-header";
-import { Badge } from "@/components/ui/badge";
-import { readSessionTopics, type Topic } from "@/lib/topics";
+import { cn } from "@/lib/utils";
+import { listTopics } from "@/lib/supabase/queries";
+import { isSupabaseConfigured } from "@/lib/supabase/server";
+import type { TopicSummary } from "@/lib/topics";
 
-export default function Home() {
-  const [topics, setTopics] = useState<Topic[]>([]);
+// lista sempre fresca — tentativas novas mudam contagem e última nota
+export const dynamic = "force-dynamic";
 
-  useEffect(() => {
-    setTopics(readSessionTopics());
-  }, []);
+function scoreColor(score: number) {
+  if (score >= 71) return "text-primary";
+  if (score >= 41) return "text-attention";
+  return "text-destructive";
+}
+
+const shortDate = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "short",
+});
+
+export default async function Home() {
+  let topics: TopicSummary[] = [];
+  let notice: string | null = null;
+
+  if (!isSupabaseConfigured()) {
+    notice =
+      "Banco não configurado — defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no .env.local e aplique a migration de supabase/migrations.";
+  } else {
+    try {
+      topics = await listTopics();
+    } catch {
+      notice =
+        "Não foi possível carregar seus tópicos agora. Confira a conexão com o Supabase e recarregue a página.";
+    }
+  }
 
   return (
     <>
@@ -35,6 +57,16 @@ export default function Home() {
           </p>
         </section>
 
+        {notice && (
+          <div
+            role="alert"
+            className="animate-in fade-in slide-in-from-bottom-1 mt-8 flex items-start gap-2.5 rounded-xl bg-attention/10 px-3.5 py-2.5 text-sm leading-relaxed text-foreground/90 ring-1 ring-attention/40 duration-300"
+          >
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-attention" />
+            {notice}
+          </div>
+        )}
+
         <section className="mt-8 grid gap-3 sm:grid-cols-2">
           {topics.map((topic, i) => (
             <Link
@@ -50,16 +82,23 @@ export default function Home() {
                   </h2>
                   <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary group-hover:opacity-100" />
                 </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-xs text-muted-foreground">
-                    histórico de tentativas entra no M3
+                <div className="flex items-center justify-between gap-2 font-mono text-xs text-muted-foreground">
+                  <span>
+                    {topic.attemptCount === 0
+                      ? "sem tentativas ainda"
+                      : `${topic.attemptCount} ${
+                          topic.attemptCount === 1 ? "tentativa" : "tentativas"
+                        }`}
+                    {topic.lastScore !== null && (
+                      <>
+                        {" · última "}
+                        <span className={cn("font-medium", scoreColor(topic.lastScore))}>
+                          {topic.lastScore}
+                        </span>
+                      </>
+                    )}
                   </span>
-                  <Badge
-                    variant="outline"
-                    className="rounded-xl font-mono text-[10px] uppercase tracking-wide text-muted-foreground"
-                  >
-                    sessão
-                  </Badge>
+                  <span>{shortDate.format(new Date(topic.createdAt))}</span>
                 </div>
               </article>
             </Link>
@@ -80,8 +119,7 @@ export default function Home() {
         </section>
 
         <p className="mt-10 text-center font-mono text-xs text-muted-foreground/70">
-          explicações e avaliações geradas por IA — tópicos vivem só nesta
-          sessão até o M3
+          explicações e avaliações geradas por IA — todo o histórico fica salvo
         </p>
       </main>
     </>

@@ -64,13 +64,13 @@ Status vivo do projeto. Atualizado a cada "commit" (ver workflow em [CLAUDE.md](
 **Objetivo:** salvar tópicos, explicações, tentativas e avaliações — histórico completo.
 
 **Entregas:**
-- [ ] Projeto Supabase + `lib/supabase/` (client server/browser)
-- [ ] Migrations: `topics`, `explanations`, `user_attempts`, `evaluations`
-- [ ] RLS habilitado
-- [ ] Loop principal salva no banco
-- [ ] Tela de histórico por tópico (tentativas + notas ao longo do tempo)
+- [x] Projeto Supabase + `lib/supabase/` (client server/browser)
+- [x] Migrations: `topics`, `explanations`, `user_attempts`, `evaluations`
+- [x] RLS habilitado
+- [x] Loop principal salva no banco
+- [x] Tela de histórico por tópico (tentativas + notas ao longo do tempo)
 
-**Commit final:** `feat: persistência de tópicos, explicações e avaliações no Supabase`
+**Commit final:** `feat: persistência de tópicos, explicações e avaliações no Supabase` ✅
 
 ---
 
@@ -128,6 +128,7 @@ Status vivo do projeto. Atualizado a cada "commit" (ver workflow em [CLAUDE.md](
 
 ## Log de sessões
 
+- **2026-07-07 — M3 Persistência** (`feature/supabase-persistencia`): migration `supabase/migrations/` cria `topics`/`explanations`/`user_attempts`/`evaluations` com índice em toda FK e RLS ligado em todas as tabelas **sem nenhuma policy** — decisão de segurança: chave anon não lê/escreve nada, todo acesso é server-side via `SUPABASE_SERVICE_ROLE_KEY` (`lib/supabase/server.ts`, guardado por `server-only`); policies por `user_id` entram só quando houver auth multiusuário de verdade. `lib/supabase/queries.ts` centraliza toda leitura/escrita (`listTopics`, `getTopicDetail`, `createTopic`, `getTopicForEvaluation`, `saveAttempt`). `/api/explain` agora persiste tópico+explicação e devolve `id`; `/api/evaluate` recebe só `topicId` + `userText` e busca o "conceito correto" no banco (client não manda mais a explicação — evita adulteração) e salva tentativa+avaliação. Home virou server component lendo do banco (`dynamic = "force-dynamic"`, cards com nº de tentativas + última nota); `app/topics/[id]` dividido em `page.tsx` (server, fetch + fallbacks de erro/não-encontrado) e `topic-view.tsx` (client, UI do loop + histórico de tentativas novo, `router.refresh()` pós-avaliação). `lib/topics.ts` só tipos de domínio — sessionStorage removido. `.env.example` trocou `NEXT_PUBLIC_SUPABASE_*` por `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`. Build de produção + smoke test das rotas validados sem credenciais reais (mensagens de erro pt-BR corretas); teste live com projeto Supabase real fica a cargo do usuário antes do próximo milestone.
 - **2026-07-07 — M2 Integração IA** (`feature/integracao-claude`): `lib/prompts.ts` com prompts do Professor e Avaliador (PRD §8) + JSON Schema de cada um; `app/api/explain` e `app/api/evaluate` chamando OpenAI (`gpt-4o-mini`) via `response_format: json_schema` (structured outputs), com guarda de `OPENAI_API_KEY` ausente e erros tipados (`AuthenticationError`/`RateLimitError`/`APIError`) traduzidos pra pt-BR; `lib/topics.ts` substitui `lib/mock-data.ts` (tipos `Topic`/`Evaluation`, tópicos seguem em sessionStorage — persistência real é M3); regras do PRD garantidas no servidor: score clampado 0–100 e `confusion_points` nunca vazio se score < 90; `app/topics/new` e `app/topics/[id]` plugados nas rotas reais com estados de erro inline/painel + retry; home lista só tópicos de sessão (cards mock removidos). Decisão de stack: trocado Claude API (Anthropic) por OpenAI API a pedido do usuário — CLAUDE.md e PRD §6 atualizados; nome da branch e do milestone mantêm "claude" por não valer o custo de renomear branch já em uso. Build de produção + smoke test das 3 rotas + chamada live com `OPENAI_API_KEY` real validados (explain e evaluate responderam 200 com JSON correto).
 - **2026-07-07 — M1 UI do loop principal** (`feature/ui-loop-principal`): `lib/mock-data.ts` (3 tópicos do PRD com explicação/analogia/avaliação em pt-BR; avaliador fake determinístico respeitando regra "confusion_points nunca vazio se score < 90"; tópicos novos em sessionStorage); home com grid de cards + card "Novo tópico"; `app/topics/new` (input + chips de exemplo + loading fake 1.4s); `app/topics/[id]` (desktop 2 colunas, mobile coluna única com textarea full-screen ao focar via matchMedia < 768px e Enviar fixo embaixo; estados escrevendo → avaliando → avaliado; aviso âmbar pra resposta < 20 palavras); avaliação com nota DM Mono + count-up 400ms, faixas de cor (≥71 verde / 41–70 âmbar / ≤40 vermelho), "O que você acertou" e pontos confusos em `bg-attention/10`; `components/site-header.tsx` sticky. Animações ≤ 400ms sem bounce. Build de produção + smoke test das 3 rotas validados.
 - **2026-07-07 — M0 Setup do projeto** (`chore/setup-projeto`): git init + branch; Next.js 15.5.20 (App Router) + TypeScript (scaffold veio Next 16, pinado em 15); Tailwind v4 + shadcn/ui com button, card, textarea, input, badge, progress; DM Sans/DM Mono via next/font, `lang="pt-BR"`; tokens de cor dark-only no `:root` do globals.css (token custom `attention` #F59E0B); `.env.example` (ANTHROPIC_API_KEY, Supabase); fixes: eslint compat Next 15, `outputFileTracingRoot`. Build de produção validado.

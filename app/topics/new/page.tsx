@@ -7,7 +7,7 @@ import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EXAMPLE_TOPIC_TITLES, saveSessionTopic } from "@/lib/topics";
+import { EXAMPLE_TOPIC_TITLES } from "@/lib/topics";
 
 export default function NewTopicPage() {
   const router = useRouter();
@@ -37,12 +37,8 @@ export default function NewTopicPage() {
         return;
       }
 
-      const topic = saveSessionTopic({
-        title: trimmed,
-        explanation: data.explanation,
-        analogy: data.analogy,
-      });
-      router.push(`/topics/${topic.id}`);
+      // rota /api/explain já salvou tópico + explicação no Supabase
+      router.push(`/topics/${data.id}`);
     } catch {
       setError("Não foi possível falar com a IA agora. Verifique sua conexão e tente de novo.");
       setLoading(false);
