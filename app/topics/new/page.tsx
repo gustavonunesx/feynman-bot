@@ -2,33 +2,51 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Sparkles } from "lucide-react";
+import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MOCK_TOPICS, createSessionTopic } from "@/lib/mock-data";
+import { EXAMPLE_TOPIC_TITLES, saveSessionTopic } from "@/lib/topics";
 
 export default function NewTopicPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = title.trim();
     if (!trimmed || loading) return;
 
     setLoading(true);
+    setError(null);
 
-    // Simula a latência da chamada à IA (vira /api/explain no M2)
-    setTimeout(() => {
-      const known = MOCK_TOPICS.find(
-        (t) => t.title.toLowerCase() === trimmed.toLowerCase()
-      );
-      const topic = known ?? createSessionTopic(trimmed);
+    try {
+      const res = await fetch("/api/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: trimmed }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? "Não foi possível gerar a explicação agora.");
+        setLoading(false);
+        return;
+      }
+
+      const topic = saveSessionTopic({
+        title: trimmed,
+        explanation: data.explanation,
+        analogy: data.analogy,
+      });
       router.push(`/topics/${topic.id}`);
-    }, 1400);
+    } catch {
+      setError("Não foi possível falar com a IA agora. Verifique sua conexão e tente de novo.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -81,6 +99,16 @@ export default function NewTopicPage() {
               </>
             )}
           </Button>
+
+          {error && (
+            <div
+              role="alert"
+              className="animate-in fade-in slide-in-from-bottom-1 flex items-start gap-2.5 rounded-xl bg-attention/10 px-3.5 py-2.5 text-sm leading-relaxed text-foreground/90 ring-1 ring-attention/40 duration-300"
+            >
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-attention" />
+              {error}
+            </div>
+          )}
         </form>
 
         <div className="animate-in fade-in fill-mode-both mt-8 delay-200 duration-400">
@@ -88,17 +116,17 @@ export default function NewTopicPage() {
             Ou comece por um exemplo
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {MOCK_TOPICS.map((topic) => (
+            {EXAMPLE_TOPIC_TITLES.map((example) => (
               <button
-                key={topic.id}
+                key={example}
                 type="button"
                 disabled={loading}
                 onClick={() => {
-                  setTitle(topic.title);
+                  setTitle(example);
                 }}
                 className="rounded-xl bg-secondary px-3 py-1.5 text-sm text-secondary-foreground transition-colors duration-300 hover:bg-primary/15 hover:text-primary disabled:opacity-50"
               >
-                {topic.title}
+                {example}
               </button>
             ))}
           </div>

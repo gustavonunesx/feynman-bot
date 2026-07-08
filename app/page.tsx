@@ -6,20 +6,13 @@ import { ArrowRight, Plus } from "lucide-react";
 
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import {
-  MOCK_TOPICS,
-  readSessionTopics,
-  type MockTopic,
-} from "@/lib/mock-data";
-
-/** Metadados fake só pra validar o visual dos cards (viram dados reais no M3). */
-const MOCK_META = ["3 tentativas · última nota 82", "1 tentativa · última nota 55", "2 tentativas · última nota 71"];
+import { readSessionTopics, type Topic } from "@/lib/topics";
 
 export default function Home() {
-  const [sessionTopics, setSessionTopics] = useState<MockTopic[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
 
   useEffect(() => {
-    setSessionTopics(readSessionTopics());
+    setTopics(readSessionTopics());
   }, []);
 
   return (
@@ -43,7 +36,7 @@ export default function Home() {
         </section>
 
         <section className="mt-8 grid gap-3 sm:grid-cols-2">
-          {[...MOCK_TOPICS, ...sessionTopics].map((topic, i) => (
+          {topics.map((topic, i) => (
             <Link
               key={topic.id}
               href={`/topics/${topic.id}`}
@@ -59,13 +52,13 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-xs text-muted-foreground">
-                    {i < MOCK_META.length ? MOCK_META[i] : "sem tentativas ainda"}
+                    histórico de tentativas entra no M3
                   </span>
                   <Badge
                     variant="outline"
                     className="rounded-xl font-mono text-[10px] uppercase tracking-wide text-muted-foreground"
                   >
-                    {i < MOCK_TOPICS.length ? "exemplo" : "novo"}
+                    sessão
                   </Badge>
                 </div>
               </article>
@@ -74,18 +67,21 @@ export default function Home() {
 
           <Link
             href="/topics/new"
-            style={{ animationDelay: `${80 + (MOCK_TOPICS.length + sessionTopics.length) * 60}ms` }}
+            style={{ animationDelay: `${80 + topics.length * 60}ms` }}
             className="group animate-in fade-in slide-in-from-bottom-2 fill-mode-both rounded-2xl outline-none duration-400 focus-visible:ring-2 focus-visible:ring-ring/50"
           >
             <article className="flex h-full min-h-32 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border p-5 text-muted-foreground transition-colors duration-300 group-hover:border-primary/50 group-hover:text-foreground">
               <Plus className="size-5 transition-colors duration-300 group-hover:text-primary" />
-              <span className="text-sm font-medium">Novo tópico</span>
+              <span className="text-sm font-medium">
+                {topics.length === 0 ? "Cadastrar meu primeiro tópico" : "Novo tópico"}
+              </span>
             </article>
           </Link>
         </section>
 
         <p className="mt-10 text-center font-mono text-xs text-muted-foreground/70">
-          dados de exemplo — a IA entra no M2
+          explicações e avaliações geradas por IA — tópicos vivem só nesta
+          sessão até o M3
         </p>
       </main>
     </>

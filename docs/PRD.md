@@ -91,12 +91,12 @@ Para o MVP, o Feynman Bot é uma ferramenta **pessoal, de usuário único**
 | Frontend | Next.js 15 (App Router) + React + TypeScript | Você já domina, reaproveita conhecimento do FinDash e Melinhas |
 | Estilo | Tailwind CSS + shadcn/ui | Consistência com seus outros projetos, rapidez de build |
 | Banco de dados | Supabase (Postgres) | Você já domina; RLS resolve isolamento de dados desde já, mesmo sendo mono-usuário agora |
-| IA — explicação e avaliação | Claude API (Anthropic) — modelo Haiku para o dia a dia (custo baixo, resposta rápida) | Já é a IA que você mais usa e entende o comportamento dela; Haiku é suficiente para explicações e avaliações de texto, com custo baixo o bastante para uso pessoal ilimitado |
+| IA — explicação e avaliação | OpenAI API — modelo gpt-4o-mini para o dia a dia (custo baixo, resposta rápida) | gpt-4o-mini é suficiente para explicações e avaliações de texto, com custo baixo o bastante para uso pessoal ilimitado |
 | Deploy | Vercel | Deploy gratuito, integração nativa com Next.js |
 
 **Restrição importante:** como é projeto pessoal (não é entregável de
 cliente), a prioridade é **custo zero ou próximo de zero** rodando — por
-isso Haiku em vez de um modelo mais caro, e planos gratuitos de
+isso gpt-4o-mini em vez de um modelo mais caro, e planos gratuitos de
 Supabase/Vercel.
 
 ---

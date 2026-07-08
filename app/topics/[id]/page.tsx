@@ -23,13 +23,12 @@ import { cn } from "@/lib/utils";
 import {
   MIN_WORDS,
   countWords,
-  getAnyTopic,
-  mockEvaluate,
-  type MockEvaluation,
-  type MockTopic,
-} from "@/lib/mock-data";
+  getSessionTopic,
+  type Evaluation,
+  type Topic,
+} from "@/lib/topics";
 
-type Phase = "writing" | "evaluating" | "short" | "evaluated";
+type Phase = "writing" | "evaluating" | "short" | "evaluated" | "error";
 
 function scoreBand(score: number) {
   if (score >= 71)
@@ -75,20 +74,21 @@ function AnimatedScore({ value }: { value: number }) {
 export default function TopicPage() {
   const { id } = useParams<{ id: string }>();
   // undefined = ainda carregando (tópicos de sessão só existem no client)
-  const [topic, setTopic] = useState<MockTopic | null | undefined>(undefined);
+  const [topic, setTopic] = useState<Topic | null | undefined>(undefined);
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<Phase>("writing");
-  const [evaluation, setEvaluation] = useState<MockEvaluation | null>(null);
+  const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(1);
   const [focusMode, setFocusMode] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setTopic(getAnyTopic(id) ?? null);
+    setTopic(getSessionTopic(id) ?? null);
   }, [id]);
 
   useEffect(() => {
-    if ((phase === "evaluated" || phase === "short") && resultRef.current) {
+    if ((phase === "evaluated" || phase === "short" || phase === "error") && resultRef.current) {
       resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [phase]);
@@ -102,8 +102,9 @@ export default function TopicPage() {
         <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-4 px-4 py-12 text-center">
           <h1 className="text-2xl font-bold">Tópico não encontrado</h1>
           <p className="text-muted-foreground">
-            Esse tópico não existe ou era de uma sessão anterior (os tópicos
-            criados no M1 vivem só na sessão do navegador).
+            Esse tópico não existe ou era de uma sessão anterior (por enquanto
+            os tópicos vivem só na sessão do navegador — a persistência entra
+            no M3).
           </p>
           <Button asChild variant="secondary" className="rounded-xl">
             <Link href="/">
@@ -119,24 +120,45 @@ export default function TopicPage() {
   const words = countWords(text);
   const tooShort = words > 0 && words < MIN_WORDS;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!text.trim() || phase === "evaluating") return;
     setFocusMode(false);
-    setPhase("evaluating");
 
-    // Simula a latência do avaliador IA (vira /api/evaluate no M2)
-    const isShort = countWords(text) < MIN_WORDS;
-    setTimeout(
-      () => {
-        if (isShort) {
-          setPhase("short");
-        } else {
-          setEvaluation(mockEvaluate(topic!, text));
-          setPhase("evaluated");
-        }
-      },
-      isShort ? 800 : 1600
-    );
+    // Aviso de resposta curta resolvido no client — não gasta chamada de IA
+    if (countWords(text) < MIN_WORDS) {
+      setPhase("short");
+      return;
+    }
+
+    setPhase("evaluating");
+    setErrorMsg(null);
+
+    try {
+      const res = await fetch("/api/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: topic!.title,
+          aiExplanation: `${topic!.explanation}\n\nAnalogia: ${topic!.analogy}`,
+          userText: text,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(data.error ?? "Não foi possível avaliar sua resposta agora.");
+        setPhase("error");
+        return;
+      }
+
+      setEvaluation(data as Evaluation);
+      setPhase("evaluated");
+    } catch {
+      setErrorMsg(
+        "Não foi possível falar com a IA agora. Verifique sua conexão e tente de novo."
+      );
+      setPhase("error");
+    }
   }
 
   function handleRetry() {
@@ -268,6 +290,34 @@ export default function TopicPage() {
       >
         Continuar escrevendo
       </Button>
+    </div>
+  );
+
+  const errorPanel = (
+    <div className="animate-in fade-in slide-in-from-bottom-2 flex flex-col gap-4 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-destructive/40 duration-400">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" />
+        <div>
+          <h3 className="font-semibold">Não deu pra avaliar agora</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{errorMsg}</p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          className="rounded-xl active:scale-[0.98]"
+          onClick={handleSubmit}
+        >
+          <RotateCcw data-icon="inline-start" />
+          Tentar de novo
+        </Button>
+        <Button
+          variant="secondary"
+          className="rounded-xl"
+          onClick={() => setPhase("writing")}
+        >
+          Voltar ao texto
+        </Button>
+      </div>
     </div>
   );
 
@@ -403,6 +453,7 @@ export default function TopicPage() {
             {phase === "writing" && writingPanel}
             {phase === "evaluating" && evaluatingPanel}
             {phase === "short" && shortPanel}
+            {phase === "error" && errorPanel}
             {phase === "evaluated" && evaluatedPanel}
           </section>
         </div>
