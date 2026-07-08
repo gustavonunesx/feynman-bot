@@ -6,6 +6,7 @@ import type {
   TopicDetail,
   TopicSummary,
 } from "@/lib/topics";
+import { INITIAL_SM2_STATE, scoreToQuality, sm2 } from "@/lib/sm2";
 import { getSupabaseServer } from "./server";
 
 /**
@@ -187,4 +188,51 @@ export async function saveAttempt(
   });
 
   if (evaluationError) throw new Error(evaluationError.message);
+}
+
+/**
+ * Aplica uma iteração do SM-2 ao tópico depois de uma avaliação e grava a
+ * agenda (upsert — a linha nasce na primeira avaliação). Retorna a data da
+ * próxima revisão (`YYYY-MM-DD`).
+ */
+export async function applyReviewSchedule(
+  topicId: string,
+  completenessScore: number
+): Promise<string> {
+  const supabase = getSupabaseServer();
+
+  const { data: current, error: readError } = await supabase
+    .from("review_schedule")
+    .select("ease_factor, interval_days, repetitions")
+    .eq("topic_id", topicId)
+    .maybeSingle();
+
+  if (readError) throw new Error(readError.message);
+
+  const state = current
+    ? {
+        // numeric do Postgres chega como string no supabase-js
+        easeFactor: Number(current.ease_factor),
+        intervalDays: current.interval_days,
+        repetitions: current.repetitions,
+      }
+    : INITIAL_SM2_STATE;
+
+  const next = sm2(state, scoreToQuality(completenessScore));
+
+  const { error: writeError } = await supabase.from("review_schedule").upsert(
+    {
+      topic_id: topicId,
+      ease_factor: next.easeFactor,
+      interval_days: next.intervalDays,
+      repetitions: next.repetitions,
+      next_review_date: next.nextReviewDate,
+      last_reviewed_at: new Date().toISOString(),
+    },
+    { onConflict: "topic_id" }
+  );
+
+  if (writeError) throw new Error(writeError.message);
+
+  return next.nextReviewDate;
 }

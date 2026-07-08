@@ -34,16 +34,15 @@ app/
     [id]/               # detalhe: explicação + reexplicação + histórico
   api/
     explain/            # rota que chama OpenAI (prompt "Professor")
-    evaluate/           # rota que chama OpenAI (prompt "Avaliador")
-    review/             # cálculo SM-2, atualiza review_schedule
+    evaluate/           # rota que chama OpenAI (prompt "Avaliador") + roda SM-2 inline após salvar
 components/
   ui/                    # shadcn/ui primitives
   site-header.tsx        # header sticky compartilhado
 lib/
   supabase/
     server.ts            # client server-only (service role, ignora RLS)
-    queries.ts            # toda leitura/escrita no banco (M3)
-  sm2.ts                 # algoritmo de repetição espaçada
+    queries.ts            # toda leitura/escrita no banco (M3) + applyReviewSchedule (M4)
+  sm2.ts                 # algoritmo de repetição espaçada, puro (sem acesso a banco)
   prompts.ts             # prompts do Professor e Avaliador (ver PRD seção 8)
   topics.ts              # tipos de domínio (Topic/Evaluation/Attempt)
 supabase/
@@ -57,7 +56,7 @@ docs/
 - Todo conteúdo visível ao usuário (UI, respostas da IA, erros) em **pt-BR**.
 - Prompts da IA sempre instruem explicitamente "responda em português do Brasil".
 - Avaliação da IA nunca é só "certo/errado" — sempre cita ≥1 ponto específico (ver PRD seção 13, regra crítica).
-- Algoritmo SM-2 implementado em `lib/sm2.ts`, isolado e testável — não embutir lógica de intervalo direto nas rotas de API.
+- Algoritmo SM-2 implementado em `lib/sm2.ts`, isolado e testável — não embutir lógica de intervalo direto nas rotas de API. Sem endpoint HTTP próprio: `/api/evaluate` chama `applyReviewSchedule` inline após salvar a tentativa; falha na agenda não derruba a resposta da avaliação (só loga).
 - Schema SQL já modelado com `user_id` em `topics` mesmo sendo mono-usuário — não remover essa coluna, é preparo pro multiusuário futuro.
 
 ## Identidade visual
