@@ -28,8 +28,8 @@ Usuário cadastra tópico difícil → IA explica simples + analogia → usuári
 
 ```
 app/
-  (dashboard)/          # painel "para revisar hoje"
-  topics/
+  (dashboard)/          # home (`/`): painel "para revisar hoje" (M5)
+  topics/               # lista completa de tópicos (`/topics`)
     new/                # cadastro de tópico
     [id]/               # detalhe: explicação + reexplicação + histórico
   api/

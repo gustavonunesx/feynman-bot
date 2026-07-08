@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { cn } from "@/lib/utils";
 import { listTopics } from "@/lib/supabase/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
+import { toLocalDateString } from "@/lib/sm2";
 import type { TopicSummary } from "@/lib/topics";
 
 // lista sempre fresca — tentativas novas mudam contagem e última nota
@@ -21,7 +22,13 @@ const shortDate = new Intl.DateTimeFormat("pt-BR", {
   month: "short",
 });
 
-export default async function Home() {
+/** `YYYY-MM-DD` local → data curta, sem cair no dia UTC. */
+function formatReviewDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return shortDate.format(new Date(year, month - 1, day));
+}
+
+export default async function TopicsPage() {
   let topics: TopicSummary[] = [];
   let notice: string | null = null;
 
@@ -36,6 +43,8 @@ export default async function Home() {
         "Não foi possível carregar seus tópicos agora. Confira a conexão com o Supabase e recarregue a página.";
     }
   }
+
+  const today = toLocalDateString(new Date());
 
   return (
     <>
@@ -52,8 +61,15 @@ export default async function Home() {
             Seus tópicos
           </h1>
           <p className="mt-2 max-w-md text-muted-foreground">
-            Escolha um tópico pra reexplicar com as suas palavras — ou cadastre
-            um assunto novo que você quer dominar.
+            Tudo que você já estudou, com a próxima revisão de cada um. O que
+            vence hoje aparece no{" "}
+            <Link
+              href="/"
+              className="rounded-sm underline underline-offset-4 outline-none transition-colors duration-300 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              painel de revisão
+            </Link>
+            .
           </p>
         </section>
 
@@ -98,7 +114,17 @@ export default async function Home() {
                       </>
                     )}
                   </span>
-                  <span>{shortDate.format(new Date(topic.createdAt))}</span>
+                  {topic.nextReviewDate === null ? (
+                    <span>{shortDate.format(new Date(topic.createdAt))}</span>
+                  ) : topic.nextReviewDate <= today ? (
+                    <span className="font-medium text-attention">
+                      revisar hoje
+                    </span>
+                  ) : (
+                    <span>
+                      revisa {formatReviewDate(topic.nextReviewDate)}
+                    </span>
+                  )}
                 </div>
               </article>
             </Link>
