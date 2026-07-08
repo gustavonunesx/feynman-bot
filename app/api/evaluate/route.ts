@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 
 import { MODEL, EVALUATOR_SCHEMA, buildEvaluatorPrompt } from "@/lib/prompts";
 import { MIN_WORDS, countWords } from "@/lib/topics";
-import { getTopicForEvaluation, saveAttempt } from "@/lib/supabase/queries";
+import {
+  applyReviewSchedule,
+  getTopicForEvaluation,
+  saveAttempt,
+} from "@/lib/supabase/queries";
 import { SUPABASE_MISSING_MESSAGE, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -116,7 +120,16 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(evaluation);
+    // A tentativa já está salva — se a agenda falhar, não derruba a resposta
+    // (o próximo SM-2 recalcula a partir do estado que existir no banco).
+    let nextReviewDate: string | null = null;
+    try {
+      nextReviewDate = await applyReviewSchedule(topicId, evaluation.completenessScore);
+    } catch (scheduleError) {
+      console.error("Falha ao atualizar review_schedule:", scheduleError);
+    }
+
+    return NextResponse.json({ ...evaluation, nextReviewDate });
   } catch (error) {
     return NextResponse.json(
       { error: apiErrorMessage(error) },
