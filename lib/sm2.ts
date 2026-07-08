@@ -90,9 +90,21 @@ function addDays(date: Date, days: number): Date {
   return result;
 }
 
-/** Data local em `YYYY-MM-DD` — sem toISOString pra não vazar pro dia UTC. */
+const BRAZIL_TZ = "America/Sao_Paulo";
+
+/**
+ * Data local (fuso do Brasil) em `YYYY-MM-DD` — sem toISOString/getFullYear
+ * pra não vazar pro dia UTC. `TZ` é nome de env var reservado na Vercel
+ * (não dá pra configurar via `vercel env add`), então o fuso é fixado aqui
+ * via Intl em vez de depender do fuso do processo.
+ */
 export function toLocalDateString(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${date.getFullYear()}-${month}-${day}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: BRAZIL_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
 }

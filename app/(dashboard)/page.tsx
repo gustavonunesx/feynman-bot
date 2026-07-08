@@ -37,6 +37,7 @@ function daysLate(nextReviewDate: string, today: string) {
 }
 
 const longDate = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
   weekday: "long",
   day: "numeric",
   month: "long",
